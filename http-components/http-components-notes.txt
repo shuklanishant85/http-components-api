@@ -1,0 +1,106 @@
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+																	HTTP COMPONENTS: NOTES
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HttpClient:
+The main entry point of the HttpClient API is the HttpClient interface.
+The user is expected to provide a request object to execute.
+HttpClient is expected to transmit the request to the target server return a corresponding response object, or throw an exception if execution was unsuccessful.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HTTP Request:
+All HTTP requests have a request line consisting a method name, a request URI and an HTTP protocol version.
+	GET localhost HTTP/1.1
+HttpClient supports out of the box all HTTP methods defined in the HTTP/1.1 specification: 
+There is a specific class for each method type.: 
+	GET	HttpGet
+	HEAD	HttpHead
+	POST	HttpPost
+	PUT	HttpPut
+	DELETE	HttpDelete
+	TRACE 	HttpTrace
+	OPTIONS	HttpOptions
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HTTP Request URI:
+HTTP request URIs consist of a protocol scheme, host name, optional port, resource path, optional query, and optional fragment.
+HttpClient provides URIBuilder utility class for creation and modification of request URIs.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HTTP response:
+HTTP response is a message sent by the server back to the client after having received and interpreted a request message. 
+The first line of that message consists of the protocol version followed by a numeric status code and its associated textual phrase.
+	HTTP/1.1 200 OK
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Message Headers:
+HttpClient provides methods to retrieve, add, remove and enumerate headers describing properties of the message.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HTTP entity:
+HTTP messages can carry a content entity associated with the request or response.
+Requests that use entities are referred to as entity enclosing requests. (POST and PUT).
+Responses are usually expected to enclose a content entity.
+There are exceptions to this rule such as responses to HEAD method and 
+204 No Content, 304 Not Modified, 205 Reset Content responses.
+HttpClient distinguishes three kinds of entities:
+	• streamed:  The content is received from a stream, or generated on the fly. Streamed entities are generally not repeatable.
+	• self-contained:  The content is in memory or obtained by means that are independent from a connection or other entity.
+	• wrapping:  The content is obtained from another entity.
+
+The entity is created when :
+		○ executing a request with enclosed content or
+		○  when the request was successful and the response body is used to send the result back to the client.
+	
+To read the content from the entity, one can either : 
+		○ retrieve the input stream via the HttpEntity.getContent() method, which returns an java.io.InputStream, or
+		○ one can supply an output stream to the HttpEntity.writeTo(OutputStream) method, which will return once all content has been written to the given stream.
+Methods of Use:
+	• HttpEntity.getContent()
+	•  HttpEntity.writeTo(OutputStream)
+	• HttpEntity.getContentType() 
+	• HttpEntity.getContentLength()
+	• HttpEntity.getContentEncoding()
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Releasing Resources:
+In order to ensure proper release of system resources one must 
+	• close either the content stream associated with the entity or 
+	• Close the response itself.
+
+NOTE:
+	The difference between closing the content stream and closing the response is that the former will attempt to keep the underlying connection alive by consuming the entity content while the latter immediately shuts down and discards the connection.
+	When working with streaming entities, one can use the EntityUtils.consume(HttpEntity) method to ensure that the entity content has been fully consumed and the underlying stream has been closed.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+Consuming entity content:
+Recommended methods to consume entity content:
+	• HttpEntity.getContent()
+	• HttpEntity.writeTo(OutputStream)
+Non-Recommended methods:
+	• EntityUtils methods (unless the response entities originate from a trusted HTTP server and are of limited length.)
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Reading Entity Content More than Once:
+Entity content must be buffered in some way, either in memory or on disk.
+The simplest way to accomplish that is by wrapping the original entity with the BufferedHttpEntity class.
+This will cause the content of the original entity to be read into a in-memory buffer.
+In all other ways the entity wrapper will be have the original one.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Producing or Sending entity content: Request Body
+POST and PUT enclose entity content into outgoing HTTP requests.
+ HttpClient provides several classes for most common data containers:
+	•  string: StringEntity
+	•  byte array: ByteArrayEntity
+	• input stream: InputStreamEntity
+	• File: FileEntity
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Simulating HTML forms:
+HttpClient provides the entity class UrlEncodedFormEntity to facilitate the process of submitting an HTML form, for instance, in order to log in to a web application or submit input data.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Response handlers:
+The most convenient way to handle responses is by using the ResponseHandler interface.
+This includes the handleResponse(HttpResponse response) method.
+Here, HttpClient will automatically take care of ensuring release of the connection back to the connection manager regardless whether the request execution succeeds or causes an exception.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HttpClient thread safety:
+HttpClient implementations are expected to be thread safe. 
+It is recommended that the same instance of this class is reused for multiple request executions.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HttpClient resource deallocation:
+When an instance CloseableHttpClient is no longer needed and is about to go out of scope the connection manager associated with it must be shut down by calling the CloseableHttpClient.close() method.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
