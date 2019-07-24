@@ -104,3 +104,45 @@ It is recommended that the same instance of this class is reused for multiple re
 HttpClient resource deallocation:
 When an instance CloseableHttpClient is no longer needed and is about to go out of scope the connection manager associated with it must be shut down by calling the CloseableHttpClient.close() method.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HTTP execution context:
+HTTP is a stateless, response-request oriented protocol.
+In order to maintain a processing state HttpClient allows HTTP requests to be executed within a particular execution context, referred to as HTTP context.
+HTTP context functions similarly to a java.util.Map<String, Object>.
+HttpContext can contain arbitrary objects and therefore may be unsafe to share between multiple threads. 
+It is recommended that each thread of execution maintains its own context.
+In the course of HTTP request execution HttpClient adds the following attributes to the execution context:
+HttpConnection	representing the actual connection to the target server
+HttpHost 	representing the connection target.
+HttpRoute 	representing the complete connection route
+HttpRequest 	final HttpRequest object in the execution context always represents the state of the message exactly as it was sent to the target server.
+HttpResponse 	representing the actual HTTP response.
+RequestConfig 	object representing the actual request configuration.
+List<URI> 	representing a collection of all redirect locations received in the process of request execution.
+Boolean 	object representing the flag indicating whether the actual request has been fully transmitted to the connection target.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+HTTP protocol interceptors:
+The HTTP protocol interceptor is a routine that implements a specific aspect of the HTTP protocol.
+They act upon one specific header or a group of related headers of the incoming message, or populate the outgoing message with one specific header or a group of related headers. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Exception handling:
+HTTP protocol processors can throw two types of exceptions:
+	• IOException
+	• HttpException
+		○ HttpClient will make no attempt to recover from any logical or HTTP protocol errors (those derived from HttpException class).
+		○ HttpClient will automatically retry those methods that are assumed to be idempotent.
+		○ HttpClient will automatically retry those methods that fail with a transport exception while the HTTP request is still being transmitted to the target server (i.e. the request has not been fully transmitted to the server).
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Request retry handler:
+In order to enable a custom exception recovery mechanism one should provide an implementation of the HttpRequestRetryHandler interface.
+We can use StandardHttpRequestRetryHandler instead of the one used by default in order to treat those request methods defined as idempotent by RFC-2616 as safe to retry automatically: GET, HEAD, PUT, DELETE, OPTIONS, and TRACE.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Redirect handling:
+HttpClient often has to rewrite the request message in the process of its execution.
+The final interpreted absolute HTTP location can be built using the original request and the context.
+The utility method URIUtils.resolve() can be used to build the interpreted absolute URI used to generate the final request. This method includes the last fragment identifier from the redirect requests or the original request.
+
